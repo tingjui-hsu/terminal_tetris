@@ -454,6 +454,7 @@ void refresh() {
 		}
 		printf("\x1b[1B\x1b[20D");
 	}
+	putchar('\n');
 }
 
 void Quit() {
@@ -479,7 +480,6 @@ int main() {
 				clock_gettime(CLOCK_MONOTONIC, &tend);
 				if(((double)tend.tv_sec + 1.0e-9*tend.tv_nsec) - ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec) >= 0.033) break;
 			} while(1);
-			putchar('\n'); // don't remove this or timeout will die.
 		}
 		tcsetattr(STDIN_FILENO, TCSANOW, &oldtc);
 		printf("\x1b[?25h");
