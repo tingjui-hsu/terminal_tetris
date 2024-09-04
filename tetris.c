@@ -7,10 +7,11 @@
 #include <sys/time.h>
 #include <sys/select.h>
 
-#define KEY_LEFT   'A'
-#define KEY_RIGHT  'D'
-#define KEY_DOWN   'S'
-#define KEY_ROTATE 'W'
+#define KEY_LEFT   '7'
+#define KEY_RIGHT  '9'
+#define KEY_ROTATE '8'
+#define KEY_DOWN   '5'
+#define KEY_ACC    '4'
 
 #define  _CASE(c, n) \
 	case KEY_##c: \
@@ -46,6 +47,14 @@
 #define CASE_ROTATE _CASE(ROTATE, -1)
 #else
 #define CASE_ROTATE case KEY_ROTATE:
+#endif
+
+#if KEY_ACC >= 'A' && KEY_ACC <= 'Z'
+#define CASE_ACC _CASE(ACC, 1)
+#elif KEY_ACC >= 'a' && KEY_ACC <= 'z'
+#define CASE_ACC _CASE(ACC, -1)
+#else
+#define CASE_ACC case KEY_ACC:
 #endif
 
 #define X 0
@@ -135,7 +144,7 @@ void init() {
 	speed = 47 - (lvl * 5);
 	next = rand() % 7;
 	for(i = 0; i < 10; i++) for(j = 0; j < 22; j++) buf[i][j] = 0;
-	printf("\x1b[?25l\x1b[H\x1b[J\x1b[2HПОЛНЫХ СТРОК:  0\x1b[3HУРОВЕНЬ:       %d\x1b[4;3HСЧЕТ:    0\x1b[2;29H", lvl);
+	printf("\x1b[?25l\x1b[H\x1b[J\x1b[2HПОЛНЫХ СТРОК:  0\x1b[3HУРОВЕНЬ:       %d\x1b[4;3HСЧЕТ:    0\x1b[3;56H%c: НАЛЕВО   %c: НАПРАВО\x1b[4;56H     %c:ПОВОРОТ\x1b[5;56H%c:УСКОРИТЬ  %c:СБРОСИТЬ\x1b[2;29H", lvl, KEY_LEFT, KEY_RIGHT, KEY_ROTATE, KEY_ACC, KEY_DOWN);
 	for(i = 0; i < 20; i++) printf("<! . . . . . . . . . .!>\x1b[1B\x1b[24D");
 	printf("<!====================!>\x1b[1B\x1b[22D\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\n");
 }
@@ -432,6 +441,14 @@ void loop() {
 
 		CASE_ROTATE
 			rotate();
+			break;
+
+		CASE_ACC
+			if(lvl < 9) {
+				lvl++;
+				speed = 47 - (lvl * 5);
+				printf("\x1b[3;16H%d", lvl);
+			}
 			break;
 
 		case '\x1b':
