@@ -12,6 +12,8 @@
 #define KEY_ROTATE '8'
 #define KEY_DOWN   '5'
 #define KEY_ACC    '4'
+#define KEY_NEXT   '1'
+#define KEY_GUIDE  '0'
 
 #define  _CASE(c, n) \
 	case KEY_##c: \
@@ -57,6 +59,22 @@
 #define CASE_ACC case KEY_ACC:
 #endif
 
+#if KEY_NEXT >= 'A' && KEY_NEXT <= 'Z'
+#define CASE_NEXT _CASE(NEXT, 1)
+#elif KEY_NEXT >= 'a' && KEY_NEXT <= 'z'
+#define CASE_NEXT _CASE(NEXT, -1)
+#else
+#define CASE_NEXT case KEY_NEXT:
+#endif
+
+#if KEY_GUIDE >= 'A' && KEY_GUIDE <= 'Z'
+#define CASE_GUIDE _CASE(GUIDE, 1)
+#elif KEY_GUIDE >= 'a' && KEY_GUIDE <= 'z'
+#define CASE_GUIDE _CASE(GUIDE, -1)
+#else
+#define CASE_GUIDE case KEY_GUIDE:
+#endif
+
 #define X 0
 #define Y 1
 #define FOR_BLOCKS for(i = 0; i < 4; i++)
@@ -68,7 +86,7 @@ struct termios oldtc, newtc;
 struct timeval timeout;
 struct timespec tstart={0, 0}, tend={0, 0};
 int speed, score;
-char i, j, next, lvl, line, type, status, end, min, max, tmp, frame, sc, star, quit = 0, piece[4][2], buf[10][22];
+char i, j, next, lvl, line, type, status, end, min, max, tmp, frame, sc, star, swNext, swGuide, quit = 0, piece[4][2], buf[10][22];
 
 char shape[7][2][9] = {
 	{
@@ -139,12 +157,25 @@ void title() {
 	lvl -= '0';
 }
 
+void showGuide() {
+	if(swGuide) printf("\x1b[3;56H%c: НАЛЕВО   %c: НАПРАВО\x1b[4;56H     %c:ПОВОРОТ\x1b[5;56H%c:УСКОРИТЬ  %c:СБРОСИТЬ\x1b[6;56H%c: ПОКАЗАТЬ  СЛЕДУЮЩУЮ\x1b[7;56H%c:  СТЕРЕТЬ ЭТОТ ТЕКСТ\x1b[8;56H  ПРОБЕЛ - СБРОСИТЬ\n", KEY_LEFT, KEY_RIGHT, KEY_ROTATE, KEY_ACC, KEY_DOWN, KEY_NEXT, KEY_GUIDE);
+	else for(i = 3; i < 9; i++) printf("\x1b[%d;56H                      ", i);
+}
+
+void showNext() {
+	if(swNext) printf("\x1b[11;19H%s\x1b[12;19H%s\n", shape[next][X], shape[next][Y]);
+	else printf("\x1b[11;19H        \x1b[12;19H        \n");
+}
+
 void init() {
 	end = frame = status = score = star = line = 0;
+	swNext = swGuide = 1;
 	speed = 47 - (lvl * 5);
 	next = rand() % 7;
 	for(i = 0; i < 10; i++) for(j = 0; j < 22; j++) buf[i][j] = 0;
-	printf("\x1b[?25l\x1b[H\x1b[J\x1b[2HПОЛНЫХ СТРОК:  0\x1b[3HУРОВЕНЬ:       %d\x1b[4;3HСЧЕТ:    0\x1b[3;56H%c: НАЛЕВО   %c: НАПРАВО\x1b[4;56H     %c:ПОВОРОТ\x1b[5;56H%c:УСКОРИТЬ  %c:СБРОСИТЬ\x1b[2;29H", lvl, KEY_LEFT, KEY_RIGHT, KEY_ROTATE, KEY_ACC, KEY_DOWN);
+	printf("\x1b[?25l\x1b[H\x1b[J\x1b[2HПОЛНЫХ СТРОК:  0\x1b[3HУРОВЕНЬ:       %d\x1b[4;3HСЧЕТ:    0\n", lvl);
+	showGuide();
+	printf("\x1b[2;29H");
 	for(i = 0; i < 20; i++) printf("<! . . . . . . . . . .!>\x1b[1B\x1b[24D");
 	printf("<!====================!>\x1b[1B\x1b[22D\\/\\/\\/\\/\\/\\/\\/\\/\\/\\/\n");
 }
@@ -160,13 +191,14 @@ void new() {
 #define BLOCK(n) (buf[piece[n][X]][piece[n][Y]])
 	if(ANY_BLOCKS) end = 1;
 #undef  BLOCK
-	printf("\x1b[11;19H%s\x1b[12;19H%s\n", shape[next][X], shape[next][Y]);
+	showNext();
 	status = 1;
 }
 
 void eliminate() {
 	score += sc;
 	if(lvl) score += 3 * (lvl + 1);
+	if(!swNext) score += 5;
 	if(score >= 1000) {
 		score -= 1000;
 		star++;
@@ -188,7 +220,7 @@ void eliminate() {
 			line++;
 
 			if(line == lvl * 10 + 6 && lvl < 9) lvl++, speed -= 5;
-			printf("\x1b[2;14H%3d\x1b[3;16H%d", line, lvl);
+			printf("\x1b[2;14H%3d\x1b[3;16H%d\n", line, lvl);
 		}
 	}
 	status = 0;
@@ -449,6 +481,16 @@ void loop() {
 				speed = 47 - (lvl * 5);
 				printf("\x1b[3;16H%d", lvl);
 			}
+			break;
+
+		CASE_NEXT
+			swNext ^= 1;
+			showNext();
+			break;
+
+		CASE_GUIDE
+			swGuide ^= 1;
+			showGuide();
 			break;
 
 		case '\x1b':

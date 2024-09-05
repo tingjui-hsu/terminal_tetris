@@ -16,6 +16,8 @@ $ tetris
 press `7`/`9`/`5` to move
 press `8` to turn
 press `4` increase speed
+press `1` to show/hide next
+press `0` to show/hide guide
 
 and you can modify these macro to change keys.
 
@@ -25,4 +27,6 @@ and you can modify these macro to change keys.
 #define KEY_ROTATE '8'
 #define KEY_DOWN   '5'
 #define KEY_ACC    '4'
+#define KEY_NEXT   '1'
+#define KEY_GUIDE  '0'
 ```
