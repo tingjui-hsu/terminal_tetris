@@ -30,3 +30,10 @@ and you can modify these macro to change keys.
 #define KEY_NEXT   '1'
 #define KEY_GUIDE  '0'
 ```
+
+define `ARROWKEYS` to enable arrow key support
+
+```c
+#define ARROWKEYS
+```
+

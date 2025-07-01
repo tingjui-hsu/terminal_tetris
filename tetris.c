@@ -7,6 +7,8 @@
 #include <sys/time.h>
 #include <sys/select.h>
 
+// #define ARROWKEYS
+
 #define KEY_LEFT   '7'
 #define KEY_RIGHT  '9'
 #define KEY_ROTATE '8'
@@ -363,14 +365,14 @@ void rotate() {
 		case 4:
 			switch(status) {
 				case 1:
-					if(!buf[piece[1][X] + 1][piece[0][Y]] & !buf[piece[0][X] + 1][piece[0][Y] - 1]) {
+					if(!buf[piece[2][X] + 2][piece[2][Y]] & !buf[piece[3][X]][piece[3][Y] - 2]) {
 						piece[2][X] += 2;
 						piece[3][Y] -= 2;
 						status++;
 					}
 					break;
 				case 2:
-					if(!buf[piece[1][X] - 1][piece[0][Y]] & !buf[piece[0][X] + 1][piece[0][Y] + 1] & piece[0][X] > 0) {
+					if(!buf[piece[2][X] - 2][piece[2][Y]] & !buf[piece[3][X]][piece[0][Y] + 2]) {
 						piece[2][X] -= 2;
 						piece[3][Y] += 2;
 						status = 1;
@@ -460,18 +462,22 @@ void loop() {
 	else fall();
 	switch(getch()) {
 		CASE_LEFT
+		_left:
 			left();
 			break;
 
 		CASE_RIGHT
+		_right:
 			right();
 			break;
 
 		CASE_DOWN
+		_down:
 			down();
 			break;
 
 		CASE_ROTATE
+		_up:
 			rotate();
 			break;
 
@@ -495,6 +501,21 @@ void loop() {
 
 		case '\x1b':
 			end = 1;
+			if(getch() == '[') {
+				end = 0;
+				switch(getch()) {
+#ifdef ARROWKEYS
+					case 'A':
+						goto _up;
+					case 'B':
+						goto _down;
+					case 'C':
+						goto _right;
+					case 'D':
+						goto _left;
+#endif
+				}
+			}
 			break;
 	}
 }
@@ -522,7 +543,6 @@ void Quit() {
 
 int main() {
 	printf("\x1b[32m");
-	signal(SIGINT, Quit);
 	tcgetattr(STDIN_FILENO, &oldtc);
 	newtc = oldtc;
 	newtc.c_lflag &= ~(ICANON | ECHO);
@@ -530,6 +550,7 @@ int main() {
 		srand(time(0));
 		title();
 		init();
+		signal(SIGINT, Quit);
 		tcsetattr(STDIN_FILENO, TCSANOW, &newtc);
 		while(!quit && !end) {
 			clock_gettime(CLOCK_MONOTONIC, &tstart);
@@ -540,6 +561,7 @@ int main() {
 				if(((double)tend.tv_sec + 1.0e-9*tend.tv_nsec) - ((double)tstart.tv_sec + 1.0e-9*tstart.tv_nsec) >= 0.033) break;
 			} while(1);
 		}
+		signal(SIGINT, NULL);
 		tcsetattr(STDIN_FILENO, TCSANOW, &oldtc);
 		printf("\x1b[?25h");
 	}
